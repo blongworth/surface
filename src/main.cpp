@@ -51,8 +51,8 @@ static void executeCommand(const char *line) {
   // avoid choosing names that are valid lander commands.
   if (strcmp(line, "help") == 0) {
     console.printHelp();
-  } else if (strcmp(line, "rotate-log") == 0) {
-    recordLine(MessageDirection::System, "rotating log file");
+  } else if (strcmp(line, "rotate-log") == 0 || strcmp(line, "start-log") == 0) {
+    recordLine(MessageDirection::System, "opening new log files");
     logger.rotateNow();
   } else if (strcmp(line, "close-log") == 0) {
     recordLine(MessageDirection::System, "closing log file");
