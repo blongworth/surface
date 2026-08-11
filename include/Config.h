@@ -1,0 +1,43 @@
+#pragma once
+
+#include <Arduino.h>
+#include <NativeEthernet.h>
+
+#ifndef ENABLE_TELEMETRY
+#define ENABLE_TELEMETRY 0
+#endif
+
+#define SERIAL_BAUD 115200
+#define TELEMETRY_BAUD 115200
+#define TELEMETRY_SERIAL Serial4
+#define TELEMETRY_SEND_INTERVAL_MS (10UL * 60UL * 1000UL)
+#define TELEMETRY_LINES_TO_SEND 5
+#define TELEMETRY_LINE_BUFFER_SIZE UDP_BUFFER_SIZE
+#define TELEMETRY_CONNECT_COMMAND "^"
+#define TELEMETRY_SHUTDOWN_COMMAND "0"
+#define TELEMETRY_CONNECT_POLL_MS 100
+#define TELEMETRY_SESSION_TIMEOUT_MS (60UL * 1000UL)
+#define TELEMETRY_MAX_SEND_RETRIES 3
+
+#define LED_PIN 13
+#define MIFI_WAKE_PIN 34
+#define MIFI_POWER_PIN 35
+#define GPS_POWER_PIN 33
+#define TELEMETRY_POWER_PIN 36
+#define SD_CHIP_SELECT BUILTIN_SDCARD
+
+#define LOG_ROTATE_HOURS 4
+#define LOG_FLUSH_INTERVAL_MS 1000
+
+#define UDP_BUFFER_SIZE 256
+#define SERIAL_COMMAND_BUFFER_SIZE 256
+
+#define LANDER_LOCAL_PORT 8002
+#define LANDER_REMOTE_PORT 8000
+
+// Network settings for the surface controller and lander.
+extern byte SURFACE_MAC[];
+extern IPAddress SURFACE_IP;
+extern IPAddress LANDER_IP;
+
+#define TIME_HEADER "T"
