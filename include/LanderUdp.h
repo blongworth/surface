@@ -20,6 +20,7 @@ public:
   void sendTime(time_t timestamp);
 
   int status() const;
+  bool connected() const;
   void setReceiveCallback(ReceiveCallback callback);
   void setTransmitCallback(TransmitCallback callback);
 
@@ -27,8 +28,18 @@ private:
   EthernetUDP _udp;
   char _rxBuffer[UDP_BUFFER_SIZE] = {0};
   int _status = -1;
+  bool _ethernetReady = false;
+  bool _connected = false;
+  bool _ethernetTimeoutReported = false;
+  bool _connectTimeoutReported = false;
+  elapsedMillis _ethernetRetryTimer;
+  elapsedMillis _ethernetTimer;
+  elapsedMillis _statusRetryTimer;
+  elapsedMillis _connectTimer;
   ReceiveCallback _receiveCallback = nullptr;
   TransmitCallback _transmitCallback = nullptr;
 
+  void beginEthernet();
+  void updateEthernet();
   void handlePacket(size_t length);
 };

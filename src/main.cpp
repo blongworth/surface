@@ -100,7 +100,7 @@ static void handleTelemetryTransmit(const char *data) {
 void setup() {
   console.begin();
   Serial.println();
-  Serial.print("Generic Surface Controller ");
+  Serial.print("Surface Controller ");
   Serial.println(compileTime);
 
   if (CrashReport) {

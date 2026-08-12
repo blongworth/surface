@@ -34,6 +34,10 @@
 
 #define LANDER_LOCAL_PORT 8002
 #define LANDER_REMOTE_PORT 8000
+#define ETHERNET_BEGIN_RETRY_MS 2000
+#define ETHERNET_LINK_TIMEOUT_MS 30000
+#define LANDER_STATUS_RETRY_MS 1000
+#define LANDER_CONNECT_TIMEOUT_MS 30000
 
 // Network settings for the surface controller and lander.
 extern byte SURFACE_MAC[];
