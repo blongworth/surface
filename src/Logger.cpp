@@ -1,5 +1,6 @@
 #include "Logger.h"
 #include "Config.h"
+#include "Clock.h"
 
 bool Logger::begin() {
   if (!SD.begin(SD_CHIP_SELECT)) {
@@ -123,11 +124,14 @@ void Logger::timestamp(char *buffer, size_t bufferSize) {
 
 void Logger::setNextRotation() {
   time_t current = now();
-  if (current < 1704067200) { // RTC not set; fall back to periodic checks later.
-    _nextRotation = current + (LOG_ROTATE_HOURS * SECS_PER_HOUR);
+  const time_t interval = LOG_ROTATE_HOURS * SECS_PER_HOUR;
+
+  if (!rtcTimeIsValid()) {
+    // RTC not set (or set to an implausible value); fall back to a relative
+    // interval instead of wall-clock alignment.
+    _nextRotation = current + interval;
     return;
   }
 
-  const time_t interval = LOG_ROTATE_HOURS * SECS_PER_HOUR;
   _nextRotation = current - (current % interval) + interval;
 }

@@ -3,6 +3,7 @@
 #include <MTP_Teensy.h>
 #include <Flasher.h>
 
+#include "Clock.h"
 #include "Config.h"
 #include "Console.h"
 #include "LanderUdp.h"
@@ -111,8 +112,8 @@ void setup() {
   MTP.begin();
 
   setSyncProvider(getTeensyTime);
-  if (timeStatus() != timeSet) {
-    Serial.println("Unable to sync with the RTC");
+  if (!rtcTimeIsValid()) {
+    Serial.println("Unable to sync with the RTC, or RTC time is implausible");
   } else {
     Serial.println("RTC has set the system time");
   }

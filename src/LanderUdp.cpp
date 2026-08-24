@@ -1,5 +1,6 @@
 #include "LanderUdp.h"
 #include "Config.h"
+#include "Clock.h"
 
 bool LanderUdp::begin() {
   Serial.println("connecting to lander");
@@ -64,6 +65,11 @@ void LanderUdp::requestStatus() {
 }
 
 void LanderUdp::sendTime(time_t timestamp) {
+  if (!rtcTimeIsValid()) {
+    Serial.println("RTC not set or implausible; refusing to send time to lander");
+    return;
+  }
+
   char buffer[32];
   snprintf(buffer, sizeof(buffer), "%s%lu", TIME_HEADER, (unsigned long)timestamp);
   send(buffer);
