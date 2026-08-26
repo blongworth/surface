@@ -21,11 +21,14 @@ Optional telemetry support can be enabled at compile time for a serial-connected
 - Relays unknown serial console commands directly to the lander
 - Supports MTP SD card access when log files are closed
 - Optional telemetry mode sends recent lander data lines at a configured interval
+- Monitors battery voltage/current via an I2C INA260 and logs 10s averages
+- Sends an OFF command to the lander if the averaged battery voltage drops too low
 
 ## Project layout
 
 ```text
 include/
+  Battery.h      INA260 battery voltage/current monitor
   Config.h       Build/runtime configuration constants
   Console.h      USB serial command console
   LanderUdp.h    UDP transport for lander communication
@@ -35,6 +38,7 @@ include/
 
 src/
   main.cpp       Application setup/loop and command routing
+  Battery.cpp
   Config.cpp     Network address definitions
   Console.cpp
   LanderUdp.cpp
@@ -232,11 +236,41 @@ Telemetry pin configuration:
 #define TELEMETRY_POWER_PIN 36
 ```
 
+## Battery monitor
+
+An INA260 on the default I2C bus (`Wire`) is sampled at 1 Hz. Every
+`BATTERY_REPORT_INTERVAL_MS` the accumulated readings are averaged, logged to
+the event log as a system message, and checked against a low-voltage
+threshold:
+
+```cpp
+#define BATTERY_SAMPLE_INTERVAL_MS 1000
+#define BATTERY_REPORT_INTERVAL_MS 10000
+#define BATTERY_LOW_VOLTAGE_THRESHOLD 11.0f // volts; tune for the installed battery pack
+```
+
+If the 10s averaged voltage drops below `BATTERY_LOW_VOLTAGE_THRESHOLD`, the
+controller starts a shutdown handshake with the lander:
+
+```cpp
+#define LANDER_OFF_ACK "ACK,OFF"
+#define LANDER_OFF_DONE "DONE,OFF"
+#define LANDER_OFF_RETRY_MS (30UL * 1000UL)
+```
+
+1. sends `LANDER_POWER_OFF_COMMAND` (`OFF` by default) to the lander
+2. resends it every `LANDER_OFF_RETRY_MS` until the lander replies `ACK,OFF`
+3. waits for the lander to reply `DONE,OFF`
+4. logs the low-voltage shutdown and closes the SD log files
+
+If the INA260 is not detected at startup, battery monitoring is disabled for
+that run and a message is printed to the serial console.
+
 ## Communication behavior
 
 At startup the controller:
 
-1. initializes serial, MTP, RTC, SD logging, Ethernet, and optional telemetry
+1. initializes serial, MTP, RTC, SD logging, Ethernet, optional telemetry, and the battery monitor
 2. opens SD log files
 3. sends the current time to the lander
 4. requests lander status

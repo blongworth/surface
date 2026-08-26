@@ -3,12 +3,14 @@
 #include <MTP_Teensy.h>
 #include <Flasher.h>
 
+#include "Battery.h"
 #include "Clock.h"
 #include "Config.h"
 #include "Console.h"
 #include "LanderUdp.h"
 #include "Logger.h"
 #include "Message.h"
+#include "ShutdownSequence.h"
 #include "Telemetry.h"
 
 const char compileTime[] = "Compiled on " __DATE__ " " __TIME__;
@@ -17,6 +19,8 @@ Logger logger;
 LanderUdp lander;
 Console console;
 Telemetry telemetry;
+Battery battery;
+ShutdownSequence shutdownSequence;
 Flasher flasher(LED_PIN, 100, 1900);
 
 static bool sdReady = false;
@@ -73,6 +77,7 @@ static void handleLanderReceive(const char *data, size_t length) {
   recordCommunication(MessageDirection::FromLander, data, length);
 
   telemetry.rememberLanderLine(data, length);
+  shutdownSequence.handleLanderLine(data);
 
   if (length > 1 && data[0] == '?') {
     Serial.print("Lander status: ");
@@ -96,6 +101,24 @@ static void handleTelemetryReceive(const char *data) {
 
 static void handleTelemetryTransmit(const char *data) {
   recordLine(MessageDirection::ToTelemetry, data);
+}
+
+static void handleBatteryReading(float voltage, float current) {
+  char line[48];
+  snprintf(line, sizeof(line), "battery voltage=%.2fV current=%.3fA", voltage, current);
+  recordLine(MessageDirection::System, line);
+}
+
+static void handleBatteryLow() {
+  if (shutdownSequence.isActive()) return;
+
+  recordLine(MessageDirection::System, "battery voltage below threshold; sending OFF to lander");
+  shutdownSequence.start();
+}
+
+static void handleShutdownComplete() {
+  recordLine(MessageDirection::System, "low voltage shutdown confirmed by lander; closing log files");
+  logger.close();
 }
 
 void setup() {
@@ -131,6 +154,13 @@ void setup() {
   telemetry.setTransmitCallback(handleTelemetryTransmit);
   telemetry.begin();
 
+  battery.setReadingCallback(handleBatteryReading);
+  battery.setLowVoltageCallback(handleBatteryLow);
+  battery.begin();
+
+  shutdownSequence.setSendCallback(sendLanderCommand);
+  shutdownSequence.setCompleteCallback(handleShutdownComplete);
+
   console.setLineCallback(handleConsoleCommand);
   flasher.begin();
 
@@ -145,6 +175,8 @@ void loop() {
   lander.update();
   logger.update();
   telemetry.update();
+  battery.update();
+  shutdownSequence.update();
   flasher.run();
 
   // Let a host browse the SD card when the log is explicitly closed.
