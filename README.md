@@ -239,7 +239,8 @@ Telemetry pin configuration:
 ## Battery monitor
 
 An INA260 on the default I2C bus (`Wire`) is sampled at 1 Hz. Every
-`BATTERY_REPORT_INTERVAL_MS` the accumulated readings are averaged, logged to
+`BATTERY_REPORT_INTERVAL_MS` the accumulated readings are averaged, combined
+with a fresh reading from the Teensy's internal temperature sensor, logged to
 the event log as a system message, and checked against a low-voltage
 threshold:
 

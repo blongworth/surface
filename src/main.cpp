@@ -103,9 +103,9 @@ static void handleTelemetryTransmit(const char *data) {
   recordLine(MessageDirection::ToTelemetry, data);
 }
 
-static void handleBatteryReading(float voltage, float current) {
-  char line[48];
-  snprintf(line, sizeof(line), "battery voltage=%.2fV current=%.3fA", voltage, current);
+static void handleBatteryReading(float voltage, float current, float temperatureC) {
+  char line[64];
+  snprintf(line, sizeof(line), "battery voltage=%.2fV current=%.3fA temp=%.1fC", voltage, current, temperatureC);
   recordLine(MessageDirection::System, line);
 }
 

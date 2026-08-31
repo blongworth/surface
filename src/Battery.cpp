@@ -1,7 +1,10 @@
 #include "Battery.h"
 #include "Config.h"
+#include <InternalTemperature.h>
 
 bool Battery::begin() {
+  InternalTemperature.begin(TEMPERATURE_MAX_ACCURACY);
+
   _ready = _ina260.begin();
   if (!_ready) {
     Serial.println("INA260 not found");
@@ -55,8 +58,10 @@ void Battery::report() {
   _currentSum = 0;
   _sampleCount = 0;
 
+  float temperatureC = InternalTemperature.readTemperatureC();
+
   if (_readingCallback) {
-    _readingCallback(avgVoltage, avgCurrent);
+    _readingCallback(avgVoltage, avgCurrent, temperatureC);
   }
 
   if (avgVoltage < BATTERY_LOW_VOLTAGE_THRESHOLD && _lowVoltageCallback) {
