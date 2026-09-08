@@ -31,7 +31,7 @@
 
 #define BATTERY_SAMPLE_INTERVAL_MS 1000
 #define BATTERY_REPORT_INTERVAL_MS 10000
-#define BATTERY_LOW_VOLTAGE_THRESHOLD 11.0f // volts; tune for the installed battery pack
+#define BATTERY_LOW_VOLTAGE_THRESHOLD 23.0f // volts; tune for the installed battery pack
 
 #define UDP_BUFFER_SIZE 256
 #define SERIAL_COMMAND_BUFFER_SIZE 256
