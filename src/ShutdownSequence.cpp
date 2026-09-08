@@ -33,15 +33,23 @@ void ShutdownSequence::handleLanderLine(const char *line) {
   }
 
   if (_state == State::WaitingForDone && strcmp(line, LANDER_OFF_DONE) == 0) {
-    _state = State::Idle;
+    _state = State::ShutDown;
     if (_completeCallback) {
       _completeCallback();
     }
   }
 }
 
+void ShutdownSequence::clearShutdown() {
+  _state = State::Idle;
+}
+
 bool ShutdownSequence::isActive() const {
   return _state != State::Idle;
+}
+
+bool ShutdownSequence::isShutDown() const {
+  return _state == State::ShutDown;
 }
 
 void ShutdownSequence::sendOff() {

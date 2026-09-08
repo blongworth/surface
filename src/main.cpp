@@ -56,9 +56,15 @@ static void executeCommand(const char *line) {
   // avoid choosing names that are valid lander commands.
   if (strcmp(line, "help") == 0) {
     console.printHelp();
-  } else if (strcmp(line, "rotate-log") == 0 || strcmp(line, "start-log") == 0) {
-    recordLine(MessageDirection::System, "opening new log files");
+  } else if (strcmp(line, "restart") == 0 || strcmp(line, "start-log") == 0) {
+    // Opening logs is what "running" means here, so this also clears a
+    // latched low-voltage shutdown.
+    const bool wasShutDown = shutdownSequence.isShutDown();
+    shutdownSequence.clearShutdown();
     logger.rotateNow();
+    recordLine(MessageDirection::System, wasShutDown
+                                             ? "manual restart after low voltage shutdown"
+                                             : "opening new log files");
   } else if (strcmp(line, "close-log") == 0) {
     recordLine(MessageDirection::System, "closing log file");
     logger.close();
@@ -110,6 +116,8 @@ static void handleBatteryReading(float voltage, float current, float temperature
 }
 
 static void handleBatteryLow() {
+  // Latched: once the lander has confirmed shutdown, stay off until the
+  // operator issues a manual restart.
   if (shutdownSequence.isActive()) return;
 
   recordLine(MessageDirection::System, "battery voltage below threshold; sending OFF to lander");

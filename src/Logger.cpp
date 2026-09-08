@@ -30,6 +30,10 @@ void Logger::rotateNow() {
 }
 
 void Logger::close() {
+  // Disarm rotation so a closed logger stays closed until something
+  // explicitly reopens the files.
+  _nextRotation = 0;
+
   if (_landerFile) {
     _landerFile.flush();
     _landerFile.close();

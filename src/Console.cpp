@@ -36,8 +36,8 @@ void Console::setLineCallback(LineCallback callback) {
 void Console::printHelp() {
   Serial.println("Local commands:");
   Serial.println("  help           show this help");
-  Serial.println("  rotate-log     open new SD log files");
-  Serial.println("  start-log      alias for rotate-log");
+  Serial.println("  restart        open new SD log files, clear low voltage shutdown");
+  Serial.println("  start-log      alias for restart");
   Serial.println("  close-log      close current SD log files");
   Serial.println("  status         request lander status");
   Serial.println("  time-sync      send current surface time to lander");

@@ -102,8 +102,8 @@ Local commands:
 
 ```text
 help        show local command help
-rotate-log  close current log files and open new files
-start-log   alias for rotate-log; useful after MTP access
+restart     open new log files and clear a low voltage shutdown
+start-log   alias for restart; useful after MTP access
 close-log   close current log files; enables MTP servicing
 status      send a lander status request
 time-sync   send current surface time to the lander
@@ -263,6 +263,11 @@ controller starts a shutdown handshake with the lander:
 2. resends it every `LANDER_OFF_RETRY_MS` until the lander replies `ACK,OFF`
 3. waits for the lander to reply `DONE,OFF`
 4. logs the low-voltage shutdown and closes the SD log files
+
+The shutdown then latches: no further `OFF` commands are sent, the log files
+stay closed, and a continuing low-voltage condition cannot re-trigger the
+handshake. Recovery is manual — the `restart` console command (alias
+`start-log`) opens new log files and clears the latch.
 
 If the INA260 is not detected at startup, battery monitoring is disabled for
 that run and a message is printed to the serial console.
