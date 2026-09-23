@@ -13,6 +13,7 @@
 #include "ShutdownSequence.h"
 #include "Telemetry.h"
 
+const char firmwareVersion[] = FIRMWARE_VERSION;
 const char compileTime[] = "Compiled on " __DATE__ " " __TIME__;
 
 Logger logger;
@@ -132,7 +133,9 @@ static void handleShutdownComplete() {
 void setup() {
   console.begin();
   Serial.println();
-  Serial.print("Surface Controller ");
+  Serial.print("Surface Controller v");
+  Serial.print(firmwareVersion);
+  Serial.print(" ");
   Serial.println(compileTime);
 
   if (CrashReport) {
