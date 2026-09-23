@@ -24,7 +24,7 @@ Battery battery;
 ShutdownSequence shutdownSequence;
 Flasher flasher(LED_PIN, 100, 1900);
 
-static bool sdReady = false;
+static bool sdRegistered = false;
 
 static time_t getTeensyTime() {
   return Teensy3Clock.get();
@@ -152,10 +152,7 @@ void setup() {
     Serial.println("RTC has set the system time");
   }
 
-  sdReady = logger.begin();
-  if (sdReady) {
-    MTP.addFilesystem(SD, "SD Card");
-  }
+  logger.begin();
 
   lander.setReceiveCallback(handleLanderReceive);
   lander.setTransmitCallback(handleLanderTransmit);
@@ -190,8 +187,16 @@ void loop() {
   shutdownSequence.update();
   flasher.run();
 
+  // Register the card with MTP on the first healthy tick, whether that is at
+  // boot or after a card is hot-inserted later.
+  if (!sdRegistered && logger.isHealthy()) {
+    MTP.addFilesystem(SD, "SD Card");
+    MTP.send_DeviceResetEvent();
+    sdRegistered = true;
+  }
+
   // Let a host browse the SD card when the log is explicitly closed.
-  if (sdReady && !logger.isOpen()) {
+  if (sdRegistered && !logger.isOpen()) {
     MTP.loop();
   }
 }

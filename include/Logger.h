@@ -12,6 +12,8 @@ public:
   void rotateNow();
   void close();
   bool isOpen();
+  bool isHealthy();
+  bool isLoggingWanted();
 
   void log(MessageDirection direction, const char *data, size_t length);
   void logLine(MessageDirection direction, const char *line);
@@ -23,9 +25,15 @@ private:
   char _eventFilename[64] = {0};
   time_t _nextRotation = 0;
   elapsedMillis _flushTimer;
+  bool _wanted = false;
+  bool _healthy = false;
+  elapsedMillis _faultTimer;
+  const char *_faultReason = nullptr;
 
   void openNewFiles();
   void writeHeader(File &file, const char *header, const char *fields);
   void timestamp(char *buffer, size_t bufferSize);
   void setNextRotation();
+  void markFault(const char *reason);
+  void serviceFault();
 };
