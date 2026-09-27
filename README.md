@@ -187,7 +187,7 @@ The default build includes MTP support using:
 -D USB_MTPDISK_SERIAL
 ```
 
-MTP is serviced only when the log files are closed. To browse the SD card over USB MTP, use the serial console command:
+MTP is serviced only after the log files are explicitly closed (not while logging is stopped by an SD fault). While logging, a host that opens the MTP device will get no response and may report errors or appear to hang; this is expected. To browse the SD card over USB MTP, use the serial console command:
 
 ```text
 close-log

@@ -25,6 +25,7 @@ ShutdownSequence shutdownSequence;
 Flasher flasher(LED_PIN, 100, 1900);
 
 static bool sdRegistered = false;
+static bool sdWasHealthy = false;
 
 static time_t getTeensyTime() {
   return Teensy3Clock.get();
@@ -203,15 +204,22 @@ void loop() {
   flasher.run();
 
   // Register the card with MTP on the first healthy tick, whether that is at
-  // boot or after a card is hot-inserted later.
-  if (!sdRegistered && logger.isHealthy()) {
-    MTP.addFilesystem(SD, "SD Card");
+  // boot or after a card is hot-inserted later. On later recoveries (e.g. a
+  // card swap re-ran SD.begin()) tell the host to re-read the card.
+  const bool sdHealthy = logger.isHealthy();
+  if (sdHealthy && !sdWasHealthy) {
+    if (!sdRegistered) {
+      MTP.addFilesystem(SD, "SD Card");
+      sdRegistered = true;
+    }
     MTP.send_DeviceResetEvent();
-    sdRegistered = true;
   }
+  sdWasHealthy = sdHealthy;
 
-  // Let a host browse the SD card when the log is explicitly closed.
-  if (sdRegistered && !logger.isOpen()) {
+  // Let a host browse the SD card only after an explicit close-log. An SD
+  // fault also leaves the files closed, but the logger may re-init the card
+  // at any moment, so MTP stays off then.
+  if (sdRegistered && !logger.isLoggingWanted()) {
     MTP.loop();
   }
 }
