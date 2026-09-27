@@ -96,6 +96,10 @@ static void handleLanderTransmit(const char *data, size_t length) {
   recordCommunication(MessageDirection::ToLander, data, length);
 }
 
+static void handleLanderEvent(const char *message) {
+  recordLine(MessageDirection::System, message);
+}
+
 static void handleConsoleCommand(const char *line) {
   recordLine(MessageDirection::FromConsole, line);
   executeCommand(line);
@@ -169,6 +173,7 @@ void setup() {
 
   lander.setReceiveCallback(handleLanderReceive);
   lander.setTransmitCallback(handleLanderTransmit);
+  lander.setEventCallback(handleLanderEvent);
   lander.begin();
 
   telemetry.setReceiveCallback(handleTelemetryReceive);

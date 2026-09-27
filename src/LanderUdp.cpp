@@ -22,24 +22,59 @@ void LanderUdp::update() {
   updateEthernet();
   if (!_ethernetReady) return;
 
-  if (!_connected) {
-    if (_statusRetryTimer >= LANDER_STATUS_RETRY_MS) {
-      _statusRetryTimer = 0;
-      requestStatus();
-    }
+  updateConnection();
 
-    if (!_connectTimeoutReported && _connectTimer >= LANDER_CONNECT_TIMEOUT_MS) {
-      Serial.println("lander response timeout; still retrying");
-      _connectTimeoutReported = true;
-    }
+  // Drain a bounded number of packets so a burst doesn't back up the stack
+  // but also can't starve the rest of the loop.
+  for (int i = 0; i < LANDER_MAX_PACKETS_PER_UPDATE && _udp.parsePacket() >= 0; i++) {
+    readPacket();
+  }
+}
+
+void LanderUdp::updateConnection() {
+  if (_connected && _lastPacketTimer >= LANDER_LINK_LOST_MS) {
+    _connected = false;
+    _connectTimer = 0;
+    _connectTimeoutReported = false;
+    _statusRetryTimer = LANDER_STATUS_RETRY_MS;
+    event("no packets from lander; probing");
   }
 
-  int packetSize = _udp.parsePacket();
-  if (!packetSize) return;
+  if (_connected) return;
 
-  int length = _udp.readBytesUntil('\r', _rxBuffer, sizeof(_rxBuffer) - 1);
+  if (_statusRetryTimer >= LANDER_STATUS_RETRY_MS) {
+    _statusRetryTimer = 0;
+    requestStatus();
+  }
+
+  if (!_connectTimeoutReported && _connectTimer >= LANDER_CONNECT_TIMEOUT_MS) {
+    event("lander response timeout; still retrying");
+    _connectTimeoutReported = true;
+  }
+}
+
+// Reads a whole datagram (no Stream timeouts) and hands each CR/LF-delimited
+// line to handleLine().
+void LanderUdp::readPacket() {
+  int packetSize = (int)_udp.size();
+  int length = _udp.read(_rxBuffer, sizeof(_rxBuffer) - 1);
+  if (length <= 0) return;
   _rxBuffer[length] = '\0';
-  handlePacket((size_t)length);
+
+  if (packetSize > length) {
+    char line[64];
+    snprintf(line, sizeof(line), "lander packet truncated: %d of %d bytes kept", length, packetSize);
+    event(line);
+  }
+
+  char *start = _rxBuffer;
+  for (char *p = _rxBuffer; p <= _rxBuffer + length; p++) {
+    if (*p == '\r' || *p == '\n' || *p == '\0') {
+      *p = '\0';
+      if (p > start) handleLine(start, p - start);
+      start = p + 1;
+    }
+  }
 }
 
 bool LanderUdp::send(const char *command) {
@@ -91,6 +126,10 @@ void LanderUdp::setTransmitCallback(TransmitCallback callback) {
   _transmitCallback = callback;
 }
 
+void LanderUdp::setEventCallback(EventCallback callback) {
+  _eventCallback = callback;
+}
+
 // QNEthernet's static-IP begin() returns without waiting for a link, so the
 // rest of the firmware keeps running with the cable unplugged.
 void LanderUdp::startEthernet() {
@@ -133,25 +172,33 @@ void LanderUdp::updateEthernet() {
   }
 }
 
-void LanderUdp::handlePacket(size_t length) {
-  if (length == 0) return;
+void LanderUdp::handleLine(char *line, size_t length) {
+  _lastPacketTimer = 0;
 
   // Sync the lander clock as soon as it is reachable; a send from setup()
   // would be dropped because the link is not up yet.
   const bool justConnected = !_connected;
   if (justConnected) {
     _connected = true;
-    Serial.println("lander replied to UDP status probe");
+    event("lander connected");
     sendTime(now());
   }
 
-  if (_rxBuffer[0] == '?' && length > 1) {
-    _status = _rxBuffer[1] - '0';
-  } else if (_rxBuffer[0] == '$' && !justConnected) {
+  if (line[0] == '?' && length > 1) {
+    _status = line[1] - '0';
+  } else if (line[0] == '$' && !justConnected) {
     sendTime(now());
   }
 
   if (_receiveCallback) {
-    _receiveCallback(_rxBuffer, length);
+    _receiveCallback(line, length);
+  }
+}
+
+void LanderUdp::event(const char *message) {
+  if (_eventCallback) {
+    _eventCallback(message);
+  } else {
+    Serial.println(message);
   }
 }

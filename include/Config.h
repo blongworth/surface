@@ -48,6 +48,8 @@
 #define ETHERNET_LINK_TIMEOUT_MS 30000
 #define LANDER_STATUS_RETRY_MS 1000
 #define LANDER_CONNECT_TIMEOUT_MS 30000
+#define LANDER_LINK_LOST_MS (60UL * 1000UL) // no packets for this long -> resume probing
+#define LANDER_MAX_PACKETS_PER_UPDATE 8
 
 // Network settings for the surface controller and lander. The surface uses
 // the Teensy's factory MAC address.

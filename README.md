@@ -310,6 +310,7 @@ During operation:
 
 ## Notes
 
-- Lander UDP messages are expected to be terminated with carriage return (`\r`).
+- Lander UDP packets are split into lines on `\r` and/or `\n`; a packet may carry several lines. Packets longer than `UDP_BUFFER_SIZE - 1` bytes are truncated and logged.
+- If no packets arrive from the lander for `LANDER_LINK_LOST_MS` (60 s), the controller logs it, resumes status probing, and re-sends the time when the lander replies.
 - The serial console uses 115200 baud by default.
 - The RTC should be set for meaningful ISO-8601 timestamps.
