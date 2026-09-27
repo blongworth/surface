@@ -254,10 +254,16 @@ threshold:
 #define BATTERY_SAMPLE_INTERVAL_MS 1000
 #define BATTERY_REPORT_INTERVAL_MS 10000
 #define BATTERY_LOW_VOLTAGE_THRESHOLD 23.0f // volts; tune for the installed battery pack
+#define BATTERY_LOW_VOLTAGE_REPORTS 3
+#define BATTERY_MAX_VALID_VOLTAGE 40.0f
+#define BATTERY_RETRY_MS (60UL * 1000UL)
 ```
 
-If the 10s averaged voltage drops below `BATTERY_LOW_VOLTAGE_THRESHOLD`, the
-controller starts a shutdown handshake with the lander:
+Samples above `BATTERY_MAX_VALID_VOLTAGE` (failed I2C reads) are dropped from
+the average, and the number dropped is logged. If the averaged voltage stays
+below `BATTERY_LOW_VOLTAGE_THRESHOLD` for `BATTERY_LOW_VOLTAGE_REPORTS`
+consecutive reports (30 s by default), the controller starts a shutdown
+handshake with the lander:
 
 ```cpp
 #define LANDER_OFF_ACK "ACK,OFF"
@@ -280,8 +286,9 @@ stay closed, and a continuing low-voltage condition cannot re-trigger the
 handshake. Recovery is manual — the `restart` console command (alias
 `start-log`) opens new log files and clears the latch.
 
-If the INA260 is not detected at startup, battery monitoring is disabled for
-that run and a message is printed to the serial console.
+If the INA260 is not detected at startup, battery monitoring and low-voltage
+shutdown are disabled until it responds. This is logged to the event log, and
+the controller probes for the chip every `BATTERY_RETRY_MS`.
 
 ## Communication behavior
 

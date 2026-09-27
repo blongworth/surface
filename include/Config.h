@@ -35,6 +35,9 @@
 #define BATTERY_SAMPLE_INTERVAL_MS 1000
 #define BATTERY_REPORT_INTERVAL_MS 10000
 #define BATTERY_LOW_VOLTAGE_THRESHOLD 23.0f // volts; tune for the installed battery pack
+#define BATTERY_LOW_VOLTAGE_REPORTS 3        // consecutive low reports before shutdown
+#define BATTERY_MAX_VALID_VOLTAGE 40.0f     // volts; readings above this are I2C faults
+#define BATTERY_RETRY_MS (60UL * 1000UL)    // retry interval when the INA260 is missing
 
 #define UDP_BUFFER_SIZE 256
 #define SERIAL_COMMAND_BUFFER_SIZE 256

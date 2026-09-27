@@ -116,6 +116,10 @@ static void handleBatteryReading(float voltage, float current, float temperature
   recordLine(MessageDirection::System, line);
 }
 
+static void handleBatteryEvent(const char *message) {
+  recordLine(MessageDirection::System, message);
+}
+
 static void handleBatteryLow() {
   // Latched: once the lander has confirmed shutdown, stay off until the
   // operator issues a manual restart.
@@ -160,6 +164,7 @@ void setup() {
 
   battery.setReadingCallback(handleBatteryReading);
   battery.setLowVoltageCallback(handleBatteryLow);
+  battery.setEventCallback(handleBatteryEvent);
   battery.begin();
 
   lander.setReceiveCallback(handleLanderReceive);
