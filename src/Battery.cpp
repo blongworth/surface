@@ -42,6 +42,10 @@ void Battery::update() {
   }
 }
 
+bool Battery::isReady() const {
+  return _ready;
+}
+
 void Battery::setReadingCallback(ReadingCallback callback) {
   _readingCallback = callback;
 }

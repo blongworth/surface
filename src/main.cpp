@@ -22,7 +22,7 @@ Console console;
 Telemetry telemetry;
 Battery battery;
 ShutdownSequence shutdownSequence;
-Flasher flasher(LED_PIN, 100, 1900);
+Flasher flasher(LED_PIN, LED_NORMAL_ON_MS, LED_NORMAL_OFF_MS);
 
 static bool sdRegistered = false;
 static bool sdWasHealthy = false;
@@ -174,7 +174,24 @@ static void handleShutdownComplete() {
   logger.close();
 }
 
+// Fast flash when logging was asked for but the SD card can't be written, the
+// battery monitor is missing, or a low-voltage shutdown is in progress or
+// latched. A deliberate close-log is not an error.
+static void updateStatusLed() {
+  const bool sdFault = logger.isLoggingWanted() && !logger.isHealthy();
+  const bool error = sdFault || !battery.isReady() || shutdownSequence.isActive();
+  if (error) {
+    flasher.update(LED_ERROR_ON_MS, LED_ERROR_OFF_MS);
+  } else {
+    flasher.update(LED_NORMAL_ON_MS, LED_NORMAL_OFF_MS);
+  }
+}
+
 void setup() {
+  // Solid on while starting up; loop() takes over with the status pattern.
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);
+
   console.begin();
   Serial.println();
   Serial.print("Surface Controller v");
@@ -217,12 +234,13 @@ void setup() {
   shutdownSequence.setEventCallback(handleShutdownEvent);
 
   console.setLineCallback(handleConsoleCommand);
-  flasher.begin();
 
   // Time sync and status probe go out once the link is up and the lander
   // replies; see LanderUdp.
   recordLine(MessageDirection::System, "startup complete");
   printHelp();
+
+  flasher.begin();
 }
 
 void loop() {
@@ -232,6 +250,7 @@ void loop() {
   telemetry.update();
   battery.update();
   shutdownSequence.update();
+  updateStatusLed();
   flasher.run();
 
   // Register the card with MTP on the first healthy tick, whether that is at

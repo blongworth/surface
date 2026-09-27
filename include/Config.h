@@ -22,6 +22,10 @@
 #define TELEMETRY_MAX_SEND_RETRIES 3
 
 #define LED_PIN 13
+#define LED_NORMAL_ON_MS 100   // brief blink every 2 s: running, SD logging OK
+#define LED_NORMAL_OFF_MS 1900
+#define LED_ERROR_ON_MS 100    // fast flash: SD fault or other error
+#define LED_ERROR_OFF_MS 100
 #define MIFI_WAKE_PIN 34
 #define MIFI_POWER_PIN 35
 #define GPS_POWER_PIN 33

@@ -290,6 +290,18 @@ If the INA260 is not detected at startup, battery monitoring and low-voltage
 shutdown are disabled until it responds. This is logged to the event log, and
 the controller probes for the chip every `BATTERY_RETRY_MS`.
 
+## Status LED
+
+The onboard LED (`LED_PIN`) shows the controller state:
+
+| Pattern | Meaning |
+| --- | --- |
+| Solid on | Starting up (`setup()` running) |
+| Brief blink every 2 s | Running normally, SD logging OK (or logs deliberately closed with `close-log`) |
+| Fast flash (100 ms on/off) | Error: SD card missing or unwritable, INA260 not responding, or low-voltage shutdown in progress/latched |
+
+Timings are set by `LED_NORMAL_*` and `LED_ERROR_*` in `include/Config.h`.
+
 ## Communication behavior
 
 At startup the controller:

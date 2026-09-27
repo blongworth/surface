@@ -17,6 +17,7 @@ public:
 
   bool begin();
   void update();
+  bool isReady() const;
 
   void setReadingCallback(ReadingCallback callback);
   void setLowVoltageCallback(LowVoltageCallback callback);
