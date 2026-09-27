@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <NativeEthernet.h>
+#include <IPAddress.h>
 
 #ifndef ENABLE_TELEMETRY
 #define ENABLE_TELEMETRY 0
@@ -46,9 +46,11 @@
 #define LANDER_STATUS_RETRY_MS 1000
 #define LANDER_CONNECT_TIMEOUT_MS 30000
 
-// Network settings for the surface controller and lander.
-extern byte SURFACE_MAC[];
+// Network settings for the surface controller and lander. The surface uses
+// the Teensy's factory MAC address.
 extern IPAddress SURFACE_IP;
+extern IPAddress SURFACE_NETMASK;
+extern IPAddress SURFACE_GATEWAY;
 extern IPAddress LANDER_IP;
 
 #define TIME_HEADER "T"

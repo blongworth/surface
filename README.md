@@ -56,10 +56,16 @@ Most configuration is in `include/Config.h`.
 Network addresses are defined in `src/Config.cpp`:
 
 ```cpp
-byte SURFACE_MAC[] = {0x04, 0xE9, 0xE5, 0x0B, 0xFC, 0xD1};
 IPAddress SURFACE_IP(111, 111, 111, 222);
+IPAddress SURFACE_NETMASK(255, 255, 255, 0);
+IPAddress SURFACE_GATEWAY(111, 111, 111, 1);
 IPAddress LANDER_IP(111, 111, 111, 111);
 ```
+
+Ethernet uses [QNEthernet](https://github.com/ssilverman/QNEthernet) (AGPL-3.0)
+and the Teensy's factory MAC address. Startup does not wait for an Ethernet
+link; the controller keeps logging and monitoring the battery until the link
+comes up.
 
 UDP ports are configured in `include/Config.h`:
 
@@ -276,11 +282,12 @@ that run and a message is printed to the serial console.
 
 At startup the controller:
 
-1. initializes serial, MTP, RTC, SD logging, Ethernet, optional telemetry, and the battery monitor
+1. initializes serial, MTP, RTC, SD logging, the battery monitor, Ethernet, and optional telemetry
 2. opens SD log files
-3. sends the current time to the lander
-4. requests lander status
-5. prints console help
+3. prints console help
+
+Once the Ethernet link is up, it requests lander status every
+`LANDER_STATUS_RETRY_MS` until the lander replies, then sends the current time.
 
 During operation:
 

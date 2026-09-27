@@ -154,6 +154,10 @@ void setup() {
 
   logger.begin();
 
+  battery.setReadingCallback(handleBatteryReading);
+  battery.setLowVoltageCallback(handleBatteryLow);
+  battery.begin();
+
   lander.setReceiveCallback(handleLanderReceive);
   lander.setTransmitCallback(handleLanderTransmit);
   lander.begin();
@@ -162,19 +166,15 @@ void setup() {
   telemetry.setTransmitCallback(handleTelemetryTransmit);
   telemetry.begin();
 
-  battery.setReadingCallback(handleBatteryReading);
-  battery.setLowVoltageCallback(handleBatteryLow);
-  battery.begin();
-
   shutdownSequence.setSendCallback(sendLanderCommand);
   shutdownSequence.setCompleteCallback(handleShutdownComplete);
 
   console.setLineCallback(handleConsoleCommand);
   flasher.begin();
 
+  // Time sync and status probe go out once the link is up and the lander
+  // replies; see LanderUdp.
   recordLine(MessageDirection::System, "startup complete");
-  lander.sendTime(now());
-  lander.requestStatus();
   console.printHelp();
 }
 

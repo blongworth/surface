@@ -1,8 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <NativeEthernet.h>
-#include <NativeEthernetUdp.h>
+#include <QNEthernet.h>
 #include <TimeLib.h>
 #include "Config.h"
 
@@ -25,9 +24,10 @@ public:
   void setTransmitCallback(TransmitCallback callback);
 
 private:
-  EthernetUDP _udp;
+  qindesign::network::EthernetUDP _udp;
   char _rxBuffer[UDP_BUFFER_SIZE] = {0};
   int _status = -1;
+  bool _ethernetStarted = false;
   bool _ethernetReady = false;
   bool _connected = false;
   bool _ethernetTimeoutReported = false;
@@ -39,7 +39,7 @@ private:
   ReceiveCallback _receiveCallback = nullptr;
   TransmitCallback _transmitCallback = nullptr;
 
-  void beginEthernet();
+  void startEthernet();
   void updateEthernet();
   void handlePacket(size_t length);
 };
