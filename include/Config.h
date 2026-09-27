@@ -58,3 +58,4 @@ extern IPAddress LANDER_IP;
 #define LANDER_OFF_ACK "ACK,OFF"
 #define LANDER_OFF_DONE "DONE,OFF"
 #define LANDER_OFF_RETRY_MS (30UL * 1000UL)
+#define LANDER_OFF_DONE_TIMEOUT_MS (5UL * 60UL * 1000UL) // resend OFF if DONE never arrives; tune to lander power-down time

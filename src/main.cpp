@@ -125,6 +125,10 @@ static void handleBatteryLow() {
   shutdownSequence.start();
 }
 
+static void handleShutdownEvent(const char *message) {
+  recordLine(MessageDirection::System, message);
+}
+
 static void handleShutdownComplete() {
   recordLine(MessageDirection::System, "low voltage shutdown confirmed by lander; closing log files");
   logger.close();
@@ -168,6 +172,7 @@ void setup() {
 
   shutdownSequence.setSendCallback(sendLanderCommand);
   shutdownSequence.setCompleteCallback(handleShutdownComplete);
+  shutdownSequence.setEventCallback(handleShutdownEvent);
 
   console.setLineCallback(handleConsoleCommand);
   flasher.begin();

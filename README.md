@@ -263,12 +263,17 @@ controller starts a shutdown handshake with the lander:
 #define LANDER_OFF_ACK "ACK,OFF"
 #define LANDER_OFF_DONE "DONE,OFF"
 #define LANDER_OFF_RETRY_MS (30UL * 1000UL)
+#define LANDER_OFF_DONE_TIMEOUT_MS (5UL * 60UL * 1000UL)
 ```
 
 1. sends `LANDER_POWER_OFF_COMMAND` (`OFF` by default) to the lander
 2. resends it every `LANDER_OFF_RETRY_MS` until the lander replies `ACK,OFF`
-3. waits for the lander to reply `DONE,OFF`
+3. waits for the lander to reply `DONE,OFF`; if it doesn't arrive within
+   `LANDER_OFF_DONE_TIMEOUT_MS`, logs a warning and goes back to step 2
 4. logs the low-voltage shutdown and closes the SD log files
+
+A `DONE,OFF` is accepted during step 2 as well, in case the `ACK,OFF` UDP
+packet was lost. Replies are matched ignoring surrounding whitespace.
 
 The shutdown then latches: no further `OFF` commands are sent, the log files
 stay closed, and a continuing low-voltage condition cannot re-trigger the

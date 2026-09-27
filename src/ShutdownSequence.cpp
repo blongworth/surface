@@ -1,12 +1,28 @@
 #include "ShutdownSequence.h"
 #include "Config.h"
 
+// True if line is expected, ignoring surrounding whitespace (e.g. a stray
+// '\n' from a CRLF-terminated lander message).
+static bool lineMatches(const char *line, const char *expected) {
+  while (isspace((unsigned char)*line)) line++;
+  size_t n = strlen(expected);
+  if (strncmp(line, expected, n) != 0) return false;
+  for (line += n; *line; line++) {
+    if (!isspace((unsigned char)*line)) return false;
+  }
+  return true;
+}
+
 void ShutdownSequence::setSendCallback(SendCallback callback) {
   _sendCallback = callback;
 }
 
 void ShutdownSequence::setCompleteCallback(CompleteCallback callback) {
   _completeCallback = callback;
+}
+
+void ShutdownSequence::setEventCallback(EventCallback callback) {
+  _eventCallback = callback;
 }
 
 void ShutdownSequence::start() {
@@ -17,9 +33,11 @@ void ShutdownSequence::start() {
 }
 
 void ShutdownSequence::update() {
-  if (_state != State::WaitingForAck) return;
-
-  if (_retryTimer >= LANDER_OFF_RETRY_MS) {
+  if (_state == State::WaitingForAck && _retryTimer >= LANDER_OFF_RETRY_MS) {
+    sendOff();
+  } else if (_state == State::WaitingForDone && _retryTimer >= LANDER_OFF_DONE_TIMEOUT_MS) {
+    event("lander did not confirm shutdown; resending OFF");
+    _state = State::WaitingForAck;
     sendOff();
   }
 }
@@ -27,12 +45,16 @@ void ShutdownSequence::update() {
 void ShutdownSequence::handleLanderLine(const char *line) {
   if (line == nullptr) return;
 
-  if (_state == State::WaitingForAck && strcmp(line, LANDER_OFF_ACK) == 0) {
+  if (_state == State::WaitingForAck && lineMatches(line, LANDER_OFF_ACK)) {
     _state = State::WaitingForDone;
+    _retryTimer = 0;
     return;
   }
 
-  if (_state == State::WaitingForDone && strcmp(line, LANDER_OFF_DONE) == 0) {
+  // Accept DONE while still waiting for ACK too: over UDP the ACK may have
+  // been lost even though the lander powered down.
+  if ((_state == State::WaitingForAck || _state == State::WaitingForDone) &&
+      lineMatches(line, LANDER_OFF_DONE)) {
     _state = State::ShutDown;
     if (_completeCallback) {
       _completeCallback();
@@ -56,5 +78,11 @@ void ShutdownSequence::sendOff() {
   _retryTimer = 0;
   if (_sendCallback) {
     _sendCallback(LANDER_POWER_OFF_COMMAND);
+  }
+}
+
+void ShutdownSequence::event(const char *message) {
+  if (_eventCallback) {
+    _eventCallback(message);
   }
 }
