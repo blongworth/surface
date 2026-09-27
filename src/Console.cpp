@@ -33,18 +33,6 @@ void Console::setLineCallback(LineCallback callback) {
   _lineCallback = callback;
 }
 
-void Console::printHelp() {
-  Serial.println("Local commands:");
-  Serial.println("  help           show this help");
-  Serial.println("  restart        open new SD log files, clear low voltage shutdown");
-  Serial.println("  start-log      alias for restart");
-  Serial.println("  close-log      close current SD log files");
-  Serial.println("  status         request lander status");
-  Serial.println("  time-sync      send current surface time to lander");
-  Serial.println("  mtp-reset      send MTP device reset event");
-  Serial.println("Any other line is relayed directly to the lander.");
-}
-
 void Console::finishLine() {
   if (_index == 0) return;
   _buffer[_index] = '\0';

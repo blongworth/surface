@@ -18,8 +18,6 @@ public:
   void setReceiveCallback(ReceiveCallback callback);
   void setTransmitCallback(TransmitCallback callback);
   bool send(const char *data);
-  bool isBusy() const;
-  bool isEnabled() const;
 
 private:
 #if ENABLE_TELEMETRY

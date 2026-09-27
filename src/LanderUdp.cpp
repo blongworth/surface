@@ -91,10 +91,6 @@ bool LanderUdp::send(const char *command) {
   return ok;
 }
 
-bool LanderUdp::sendLine(const char *command) {
-  return send(command);
-}
-
 void LanderUdp::requestStatus() {
   send("?");
 }

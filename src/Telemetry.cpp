@@ -74,22 +74,6 @@ bool Telemetry::send(const char *data) {
 #endif
 }
 
-bool Telemetry::isBusy() const {
-#if ENABLE_TELEMETRY
-  return _com.isWaiting() || _state != State::Off;
-#else
-  return false;
-#endif
-}
-
-bool Telemetry::isEnabled() const {
-#if ENABLE_TELEMETRY
-  return true;
-#else
-  return false;
-#endif
-}
-
 #if ENABLE_TELEMETRY
 void Telemetry::clearSerial() {
   while (TELEMETRY_SERIAL.available() > 0) {

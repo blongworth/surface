@@ -15,7 +15,6 @@ public:
   void update();
 
   bool send(const char *command);
-  bool sendLine(const char *command);
   void requestStatus();
   void sendTime(time_t timestamp);
 

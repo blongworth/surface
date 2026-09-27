@@ -46,39 +46,70 @@ static void recordLine(MessageDirection direction, const char *line) {
   recordCommunication(direction, line, strlen(line));
 }
 
+// Adapter: ShutdownSequence's send callback returns void.
 static void sendLanderCommand(const char *command) {
-  lander.sendLine(command);
+  lander.send(command);
+}
+
+// Local console/telemetry commands. Anything not listed here is relayed to the
+// lander, so avoid names that are valid lander commands.
+struct LocalCommand {
+  const char *name;
+  const char *help;
+  void (*run)();
+};
+
+static void printHelp();
+
+static void restartLogging() {
+  // Opening logs is what "running" means here, so this also clears a
+  // latched low-voltage shutdown.
+  const bool wasShutDown = shutdownSequence.isShutDown();
+  shutdownSequence.clearShutdown();
+  logger.rotateNow();
+  recordLine(MessageDirection::System, wasShutDown
+                                           ? "manual restart after low voltage shutdown"
+                                           : "opening new log files");
+}
+
+static void closeLogging() {
+  recordLine(MessageDirection::System, "closing log file");
+  logger.close();
+}
+
+static void requestLanderStatus() { lander.requestStatus(); }
+static void syncLanderTime() { lander.sendTime(now()); }
+static void resetMtp() { MTP.send_DeviceResetEvent(); }
+
+static const LocalCommand localCommands[] = {
+  {"help", "show this help", printHelp},
+  {"restart", "open new SD log files, clear low voltage shutdown", restartLogging},
+  {"start-log", "alias for restart", restartLogging},
+  {"close-log", "close current SD log files", closeLogging},
+  {"status", "request lander status", requestLanderStatus},
+  {"time-sync", "send current surface time to lander", syncLanderTime},
+  {"mtp-reset", "send MTP device reset event", resetMtp},
+};
+
+static void printHelp() {
+  Serial.println("Local commands:");
+  for (const LocalCommand &command : localCommands) {
+    Serial.printf("  %-14s %s\n", command.name, command.help);
+  }
+  Serial.println("Any other line is relayed directly to the lander.");
 }
 
 static void executeCommand(const char *line) {
   if (line == nullptr || line[0] == '\0') return;
 
-  // Yes: a simple and practical rule is to handle known local commands here and
-  // relay everything else to the lander. Keep local command names documented and
-  // avoid choosing names that are valid lander commands.
-  if (strcmp(line, "help") == 0) {
-    console.printHelp();
-  } else if (strcmp(line, "restart") == 0 || strcmp(line, "start-log") == 0) {
-    // Opening logs is what "running" means here, so this also clears a
-    // latched low-voltage shutdown.
-    const bool wasShutDown = shutdownSequence.isShutDown();
-    shutdownSequence.clearShutdown();
-    logger.rotateNow();
-    recordLine(MessageDirection::System, wasShutDown
-                                             ? "manual restart after low voltage shutdown"
-                                             : "opening new log files");
-  } else if (strcmp(line, "close-log") == 0) {
-    recordLine(MessageDirection::System, "closing log file");
-    logger.close();
-  } else if (strcmp(line, "status") == 0) {
-    lander.requestStatus();
-  } else if (strcmp(line, "time-sync") == 0) {
-    lander.sendTime(now());
-  } else if (strcmp(line, "mtp-reset") == 0) {
-    MTP.send_DeviceResetEvent();
-  } else {
-    sendLanderCommand(line);
+  for (const LocalCommand &command : localCommands) {
+    if (strcmp(line, command.name) == 0) {
+      command.run();
+      return;
+    }
   }
+
+  lander.send(line);
 }
 
 static void handleLanderReceive(const char *data, size_t length) {
@@ -191,7 +222,7 @@ void setup() {
   // Time sync and status probe go out once the link is up and the lander
   // replies; see LanderUdp.
   recordLine(MessageDirection::System, "startup complete");
-  console.printHelp();
+  printHelp();
 }
 
 void loop() {

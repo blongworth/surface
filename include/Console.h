@@ -10,7 +10,6 @@ public:
   void begin();
   void update();
   void setLineCallback(LineCallback callback);
-  void printHelp();
 
 private:
   char _buffer[SERIAL_COMMAND_BUFFER_SIZE] = {0};
