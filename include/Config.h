@@ -7,7 +7,7 @@
 #define ENABLE_TELEMETRY 0
 #endif
 
-#define FIRMWARE_VERSION "0.1.1"
+#define FIRMWARE_VERSION "0.2.0"
 
 #define SERIAL_BAUD 115200
 #define TELEMETRY_BAUD 115200
