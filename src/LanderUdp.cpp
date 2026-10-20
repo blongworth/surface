@@ -29,6 +29,15 @@ void LanderUdp::update() {
   for (int i = 0; i < LANDER_MAX_PACKETS_PER_UPDATE && _udp.parsePacket() >= 0; i++) {
     readPacket();
   }
+
+  uint32_t dropped = _udp.droppedReceiveCount();
+  if (dropped != _droppedReported) {
+    char line[64];
+    snprintf(line, sizeof(line), "lander UDP queue overflow: %lu packets dropped",
+             (unsigned long)(dropped - _droppedReported));
+    event(line);
+    _droppedReported = dropped;
+  }
 }
 
 void LanderUdp::updateConnection() {

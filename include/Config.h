@@ -54,6 +54,7 @@
 #define LANDER_CONNECT_TIMEOUT_MS 30000
 #define LANDER_LINK_LOST_MS (60UL * 1000UL) // no packets for this long -> resume probing
 #define LANDER_MAX_PACKETS_PER_UPDATE 8
+#define LANDER_UDP_QUEUE_CAPACITY 32 // datagrams buffered between update() calls; CFG? sends ~15 in a burst
 
 // Network settings for the surface controller and lander. The surface uses
 // the Teensy's factory MAC address.

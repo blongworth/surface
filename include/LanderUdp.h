@@ -25,9 +25,10 @@ public:
   void setEventCallback(EventCallback callback);
 
 private:
-  qindesign::network::EthernetUDP _udp;
+  qindesign::network::EthernetUDP _udp{LANDER_UDP_QUEUE_CAPACITY};
   char _rxBuffer[UDP_BUFFER_SIZE] = {0};
   int _status = -1;
+  uint32_t _droppedReported = 0;
   bool _ethernetStarted = false;
   bool _ethernetReady = false;
   bool _connected = false;
